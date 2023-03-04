@@ -1,0 +1,157 @@
+body {
+    font-family: "Rubik", sans-serif;
+}
+
+nav .navbar-brand
+{
+    font-size: x-large;
+}
+
+.container {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+    text-align: center;
+    width: 90%;
+}
+
+.section {
+    padding-bottom: 1rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    padding-top: 0.5rem;
+}
+
+.main-screen {
+    display:grid;
+    height: 80vh;
+    margin: 0px;
+    overflow: hidden;
+    place-items: center;
+}
+  
+h1 {
+    font-size: clamp(2em, 2vw, 4em);
+    font-weight: 400;
+    margin: 0px;
+    padding: 20px;
+    text-align: center;
+}
+
+.main-links {
+    font-size:x-large;
+}
+
+.main-links > a:hover{
+    animation: background-pan 3s linear infinite;
+    background: linear-gradient(
+        to right,
+        var(--purple),
+        var(--violet),
+        var(--pink),
+        var(--purple)
+    );
+    background-size: 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    white-space: nowrap;
+}
+
+a:link {
+    text-decoration: none;
+    color:#fff;
+}
+
+a:visited {
+    text-decoration: none;
+    color:#fff;
+}
+
+a:hover {
+    text-decoration: none;
+    color:#bfbec2;
+}
+
+a:active {
+    text-decoration: underline;
+    color:#7b5bb5;
+}
+
+:root {  
+    --purple: rgb(123, 31, 162);
+    --violet: rgb(103, 58, 183);
+    --pink: rgb(244, 143, 177);
+}
+  
+@keyframes background-pan {
+from {
+    background-position: 0% center;
+}
+
+to {
+    background-position: -200% center;
+}
+}
+
+@keyframes scale {
+from, to {
+    transform: scale(0);
+}
+
+50% {
+    transform: scale(1);
+}
+}
+
+@keyframes rotate {
+from {
+    transform: rotate(0deg);
+}
+
+to {
+    transform: rotate(180deg);
+}
+}
+
+h1 > .magic {
+    display: inline-block;
+    position: relative;
+}
+
+h1 > .magic > .magic-star {
+    --size: clamp(20px, 1.5vw, 30px);
+
+    animation: scale 700ms ease forwards;
+    display: block;
+    height: var(--size);
+    left: var(--star-left);
+    position: absolute;
+    top: var(--star-top);
+    width: var(--size);
+}
+
+h1 > .magic > .magic-star > svg {
+    animation: rotate 1000ms linear infinite;
+    display: block;
+    opacity: 0.7;
+}
+
+h1 > .magic > .magic-star > svg > path {
+    fill: var(--violet);
+}
+
+.magic-text {
+    animation: background-pan 3s linear infinite;
+    background: linear-gradient(
+        to right,
+        var(--purple),
+        var(--violet),
+        var(--pink),
+        var(--purple)
+    );
+    background-size: 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    white-space: nowrap;
+}
