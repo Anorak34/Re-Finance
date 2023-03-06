@@ -45,6 +45,12 @@ h1 {
     text-align: center;
 }
 
+.form-wrapper {
+    width:fit-content;
+    display:block;
+    text-align: left !important;
+}
+
 /* LINK CSS */
 
 .main-links {
