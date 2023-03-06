@@ -1,0 +1,50 @@
+{% extends 'ReFinance/layout.html' %}
+
+{% block title %}
+Account
+{% endblock %}
+
+{% block main %}
+<div class="mycontainer p-2">
+    <div class="account-card">
+        <div class="account-card-content">
+            <h3 class="account-card-title">Account Details:</h3>
+            <hr>
+            <h4 class="account-card-text">Userame: example-username</h3>
+                <br>
+                <h4 class="account-card-text">Name: First Last</h3>
+                    <br>
+                    <h4 class="account-card-text">Email: example-email@gmail.com</h3>
+                        <br>
+                        <h4 class="account-card-text">Cash: $10,000</h3>
+        </div>
+        <p class="account-card-icon">Re:Finance <span id="staff-status"> - STAFF</span></p>
+    </div>
+    <div class="px-5"></div>
+    <div class="p-2" id="text">
+        <div class="line">
+            <p>Account Settings:</p>
+        </div>
+        <a href="/add_cash">
+            <div class="line fancy">
+                <p>Add-Cash</p>
+            </div>
+        </a>
+        <a href="/change_password">
+            <div class="line fancy">
+                <p>Change-Password</p>
+            </div>
+        </a>
+        <a href="/change_account_details">
+            <div class="line fancy">
+                <p>Account-Details</p>
+            </div>
+        </a>
+        <a href="/delete_account">
+            <div class="line fancy">
+                <p>Delete-Account</p>
+            </div>
+        </a>
+    </div>
+    <script src="\static\js\settings.js"></script>
+    {% endblock %}
