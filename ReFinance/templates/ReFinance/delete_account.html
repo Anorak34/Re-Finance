@@ -1,9 +1,17 @@
 {% extends 'ReFinance/layout.html' %}
+{% load crispy_forms_tags %}
+{% load crispy_forms_filters %}
 
 {% block title %}
     Delete Account
 {% endblock %}
 
 {% block main %}
-delete account?
+<form action="{% url 'delete_account' %}" method="post">{% csrf_token %}
+    <h3 class="mb-5">Enter Password to Delete your Account</h3>
+    <div class="form-wrapper mx-auto">
+        {{ form|crispy }}
+    </div>
+    <button class="btn btn-outline-light" type="submit">Delete Account</button>
+</form>
 {% endblock %}

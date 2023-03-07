@@ -1,0 +1,51 @@
+{% extends 'ReFinance/layout.html' %}
+{% load ttags %}
+{% load crispy_forms_tags %}
+{% load crispy_forms_filters %}
+
+{% block title %}
+Add Cash
+{% endblock %}
+
+{% block main %}
+<form action="{% url 'add_cash' %}" method="post">{% csrf_token %}
+    <div class="mycontainer">
+        <h3 class="my-auto text-nowrap mx-1">Add Cash:</h3>{{ form.cash }}
+        <h3 class="my-auto mx-1"> $</h3>
+    </div>
+    <div class="card-container justify-content-center mt-4">
+        <div class="col">
+            <div class="pay-card my-auto mx-4">
+                <div class="front">
+                    <div class="type">
+                        <img id="bankid" class="bankid" />
+                    </div>
+                    <span class="chip"></span>
+                    <span class="card_number" id="card_number">
+                        &#x25CF;&#x25CF;&#x25CF;&#x25CF; &#x25CF;&#x25CF;&#x25CF;&#x25CF;
+                        &#x25CF;&#x25CF;&#x25CF;&#x25CF; &#x25CF;&#x25CF;&#x25CF;&#x25CF;
+                    </span>
+                    <div class="date"><span class="date_value" id="date_value">MM / YYYY</span></div>
+                    <span class="fullname" id="fullname">FULL NAME</span>
+                </div>
+            </div>
+        </div>
+        <div class="col mt-2">
+            <label>Card Number</label>
+            {{ form.number }}
+            <label>Cardholder name</label>
+            {{ form.name }}
+            <label>Expiry date (MM / YYYY)</label>
+            <div class="date-select-wrapper">
+                {{ form.month }}
+                <h3 class="mx-1 my-auto">/</h3>
+                {{ form.year }}
+            </div>
+            <label>Security Number</label>
+            {{ form.cvv }}
+            <button class="btn btn-outline-light mt-2" type="submit">Add Cash</button>
+        </div>
+    </div>
+</form>
+<script src="\static\js\card.js"></script>
+{% endblock %}

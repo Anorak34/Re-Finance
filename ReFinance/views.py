@@ -1,7 +1,12 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.hashers  import check_password
 from .forms import *
+from .helpers import luhn, usd
+from .models import *
 
 
 def main(request):
@@ -10,6 +15,7 @@ def main(request):
 
 def register(request):
     if request.method == "POST":
+        # Process registration form
         form = NewUserForm(request.POST)
         if form.is_valid():
             user = form.save()
@@ -27,6 +33,7 @@ def register(request):
 
 def login_page(request):
     if request.method == "POST":
+        # Process login form
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             username = form.cleaned_data.get('username')
@@ -47,12 +54,14 @@ def login_page(request):
         return render(request, 'ReFinance/login.html', {'form':form})
     
 
+@login_required(login_url='/login/')
 def logout_page(request):
     logout(request)
     messages.success(request, "Logged out")
     return redirect('main')
 
 
+@login_required(login_url='/login/')
 def quote(request):
     if request.method == "POST":
         return
@@ -60,6 +69,7 @@ def quote(request):
         return render(request, 'ReFinance/quote.html', {})
     
 
+@login_required(login_url='/login/')
 def buy(request):
     if request.method == "POST":
         messages.success(request, "x shares of x bought at $x")
@@ -68,6 +78,7 @@ def buy(request):
         return render(request, 'ReFinance/buy.html', {})
 
 
+@login_required(login_url='/login/')
 def sell(request):
     if request.method == "POST":
         messages.success(request, "x shares of x sold at $x")
@@ -76,41 +87,111 @@ def sell(request):
         return render(request, 'ReFinance/sell.html', {})
     
 
+@login_required(login_url='/login/')
 def history(request):
     return render(request, 'ReFinance/history.html', {})
 
 
+@login_required(login_url='/login/')
 def account(request):
-    return render(request, 'ReFinance/account.html', {})
+    user = request.user
+    cash = user.userProfile.cash
+    cash = usd(cash)
+    return render(request, 'ReFinance/account.html', {'cash':cash})
 
 
+@login_required(login_url='/login/')
 def add_cash(request):
+    # Process cash form
     if request.method == "POST":
-        messages.success(request, "$x added to account")
+        form = CashForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, "Please fill in all fields")
+            return redirect('add_cash')
+        card_number = form.cleaned_data['number'].replace(' ', '')
+        try:
+            int(form.cleaned_data['cvv'])
+            int(card_number)
+            int(form.cleaned_data['month'])
+            int(form.cleaned_data['year'])
+        except:
+            messages.error(request, "Invalid Information")
+            return redirect('add_cash')
+        if int(form.cleaned_data['cvv']) < 100:
+            messages.error(request, "Invalid CVV")
+            return redirect('add_cash')
+        if not luhn(card_number):
+            messages.error(request, "Invalid Card Number")
+            return redirect('add_cash')
+        
+        cash = float(form.cleaned_data['cash'])
+        user = request.user
+        Profile.addCash(user, cash)
+        messages.success(request, f"{usd(cash)} added to account")
         return redirect('account')
     else:
-        return render(request, 'ReFinance/addCash.html', {})
+        form = CashForm()
+        return render(request, 'ReFinance/addCash.html', {'form':form})
 
 
+@login_required(login_url='/login/')
 def change_password(request):
     if request.method == "POST":
-        messages.success(request, "Password successfully changed")
-        return redirect('account')
+        # Process password form
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            form.save()
+            update_session_auth_hash(request, form.user)
+            messages.success(request, "Password successfully changed")
+            return redirect('account')
+        messages.error(request, "Unsuccessful: Invalid information")
+        for error in form.errors:
+            messages.error(request, form.errors[error])
+        return redirect('change_password')
     else:
-        return render(request, 'ReFinance/changePass.html', {})
+        form = PasswordChangeForm(user=request.user)
+        return render(request, 'ReFinance/changePass.html', {'form':form})
 
 
+@login_required(login_url='/login/')
 def change_account_details(request):
     if request.method == "POST":
-        messages.success(request, "Account details successfully altered")
-        return redirect('main')
+        # Process account details form
+        form = ChangeUserDetailsForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Account details successfully altered")
+            return redirect('account')
+        messages.error(request, "Unsuccessful: Invalid information")
+        for error in form.errors:
+            messages.error(request, form.errors[error])
+        return redirect('change_account_details')
     else:
-        return render(request, 'ReFinance/change_account_details.html', {})
+        form = ChangeUserDetailsForm(instance=request.user)
+        return render(request, 'ReFinance/change_account_details.html', {'form':form})
     
 
+@login_required(login_url='/login/')
 def delete_account(request):
     if request.method == "POST":
-        messages.success(request, "Account Deleted")
-        return redirect('main')
+        # Process account deletion form
+        form = DeleteAccountForm(request.POST)
+        if form.is_valid():
+            if check_password(form.cleaned_data['password'], request.user.password):
+                user = request.user
+                user.delete()
+                messages.success(request, "Account deleted")
+                return redirect('main')
+            else:
+                messages.error(request, "Unsuccessful: Password Incorrect")
+                return redirect('delete_account')
+        messages.error(request, "Unsuccessful: Please Enter Password")
+        return redirect('delete_account')
     else:
-        return render(request, 'ReFinance/delete_account.html', {})
+        form = DeleteAccountForm()
+        return render(request, 'ReFinance/delete_account.html', {'form':form})
+    
+
+def test(request):
+    form = CashForm()
+    return render(request, 'ReFinance/test.html', {'form':form})

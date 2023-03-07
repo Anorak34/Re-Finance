@@ -1,9 +1,17 @@
 {% extends 'ReFinance/layout.html' %}
+{% load crispy_forms_tags %}
+{% load crispy_forms_filters %}
 
 {% block title %}
     Change Account Details
 {% endblock %}
 
 {% block main %}
-Change Account Details
+<form action="{% url 'change_account_details' %}" method="post">{% csrf_token %}
+    <h3 class="mb-5">Change Account Details</h3>
+    <div class="form-wrapper mx-auto">
+        {{ form|crispy }}
+    </div>
+    <button class="btn btn-outline-light" type="submit">Change Account Details</button>
+</form>
 {% endblock %}

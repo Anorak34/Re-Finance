@@ -1,0 +1,17 @@
+{% extends 'ReFinance/layout.html' %}
+{% load crispy_forms_tags %}
+{% load crispy_forms_filters %}
+
+{% block title %}
+Change Password
+{% endblock %}
+
+{% block main %}
+<form action="{% url 'change_password' %}" method="post">{% csrf_token %}
+    <h3 class="mb-5">Change Password</h3>
+    <div class="form-wrapper mx-auto">
+        {{ form|crispy }}
+    </div>
+    <button class="btn btn-outline-light" type="submit">Change Password</button>
+</form>
+{% endblock %}

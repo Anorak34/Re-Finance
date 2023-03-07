@@ -10,15 +10,21 @@ Account
         <div class="account-card-content">
             <h3 class="account-card-title">Account Details:</h3>
             <hr>
-            <h4 class="account-card-text">Userame: example-username</h3>
+            <h4 class="account-card-text">Userame: {{ user.get_username }}</h3>
                 <br>
-                <h4 class="account-card-text">Name: First Last</h3>
+                <h4 class="account-card-text">Name: {{ user.first_name }} {{ user.last_name }}</h3>
                     <br>
-                    <h4 class="account-card-text">Email: example-email@gmail.com</h3>
+                    <h4 class="account-card-text">Email: {{ user.email }}</h3>
                         <br>
-                        <h4 class="account-card-text">Cash: $10,000</h3>
+                        <h4 class="account-card-text">Cash: {{ cash }}</h3>
         </div>
-        <p class="account-card-icon">Re:Finance <span id="staff-status"> - STAFF</span></p>
+        <p class="account-card-icon">Re:Finance 
+            <span id="staff-status">
+                {% if user.is_staff %}
+                - STAFF
+                {% endif %}
+            </span>
+        </p>
     </div>
     <div class="px-5"></div>
     <div class="p-2" id="text">

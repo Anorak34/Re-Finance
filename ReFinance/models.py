@@ -6,9 +6,13 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='userProfile')
     cash = models.FloatField(default=10000.00)
     default_currency = models.CharField(max_length=3, default='usd')
+
+    def addCash(self, added_cash):
+        self.userProfile.cash += added_cash
+        self.userProfile.save()
 
     @receiver(post_save, sender=User)
     def create_user_profile(sender, instance, created, **kwargs):

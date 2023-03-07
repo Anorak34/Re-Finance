@@ -5,6 +5,9 @@
     --pink: rgb(244, 143, 177);
 
     --border: rgb(3, 169, 244);
+
+    --card-color:#363636;
+    --text-color:#fff;
 }
 
 body {
@@ -393,4 +396,132 @@ body::-webkit-scrollbar, body::-webkit-scrollbar-track {
 
 .fancy:hover > .outer:nth-child(15) {
     transform: translate(120%, -30%) rotate(-3deg);
+}
+
+/* CASH CARD CSS */
+
+.card-container{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: auto;
+    width: 680px;
+}
+
+.pay-card{
+    position: relative;
+    width: 420px;
+    height: 250px;
+    margin-bottom: 85px;
+    margin-right: 10px;
+    border-radius: 17px;
+    box-shadow: 0 5px 20px -5px rgba(0,0,0,0.1);
+}
+
+.front{
+    position: absolute;
+    background: var(--card-color);
+    border-radius: 17px;
+    padding: 50px;
+    width: 100%;
+    height: 100%;
+    z-index: 50;
+    background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0) 1px, rgba(255, 255, 255, 0.03) 2px, rgba(255, 255, 255, 0.04) 3px, rgba(255, 255, 255, 0.05) 4px), -webkit-linear-gradient(-245deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.2) 70%, rgba(255, 255, 255, 0) 90%);
+}
+
+.type{
+    position: absolute;
+    width: 75px;
+    height: 45px;
+    top: 20px;
+    right: 20px;
+}
+
+.bankid{
+    width: 100%;
+    float: right;
+}
+
+.card_number{
+    position: absolute;
+    font-size: 26px;
+    font-weight: 500;
+    letter-spacing: -1px;
+    top: 110px;
+    color: var(--text-color);
+    word-spacing: 3px;
+    left: 50px;
+}
+
+.date{
+    position: absolute;
+    bottom: 40px;
+    right: 55px;
+    width: 90px;
+    height: 35px;
+    color: var(--text-color);
+}
+
+.date_value{
+    font-size: 12px;
+    position: absolute;
+    margin-left: 22px;
+    margin-top: 12px;
+    color: var(--text-color);
+    font-weight: 500;
+    left:0px
+}
+
+.date:after{
+    content: 'MONTH / YEAR';
+    position: absolute;
+    display: block;
+    font-size: 7px;
+    margin-left: 20px;
+}
+.date:before{
+    content: 'valid \a thru';
+    position: absolute;
+    display: block;
+    font-size: 8px;
+    white-space: pre;
+    margin-top: 8px;
+}
+
+.fullname{
+    position: absolute;
+    font-size: 20px;
+    bottom: 40px;
+    color: var(--text-color);
+    left: 50px;
+}
+
+.cvv{
+    width: 40%;
+}
+
+.chip{
+    position: absolute;
+    width: 55px;
+    height: 40px;
+    background: #bbb;
+    border-radius: 7px;
+    top:50px;
+    left:50px;
+}
+.chip:after{
+    content: '';
+    display: block;
+    width: 35px;
+    height: 25px;
+    border-radius: 4px;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    background: #ddd;
+}
+
+.date-select-wrapper {
+    display:flex;
 }
