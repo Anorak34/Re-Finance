@@ -8,6 +8,7 @@ from .forms import *
 from .helpers import luhn, usd
 from .models import *
 
+valid_currencies = {'AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN', 'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BRL', 'BSD', 'BTC', 'BTN', 'BWP', 'BYN', 'BYR', 'BZD', 'CAD', 'CDF', 'CHF', 'CLF', 'CLP', 'CNH', 'CNY', 'COP', 'CRC', 'CUC', 'CUP', 'CVE', 'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'EEK', 'EGP', 'ERN', 'ETB', 'EUR', 'FJD', 'FKP', 'GBP', 'GEL', 'GGP', 'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HRK', 'HTG', 'HUF', 'IDR', 'ILS', 'IMP', 'INR', 'IQD', 'IRR', 'ISK', 'JEP', 'JMD', 'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW', 'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MRO', 'MRU', 'MTL', 'MUR', 'MVR', 'MWK', 'MXN', 'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK', 'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG', 'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR', 'SBD', 'SCR', 'SDG', 'SEK', 'SGD', 'SHP', 'SLL', 'SOS', 'SRD', 'SSP', 'STD', 'STN', 'SVC', 'SYP', 'SZL', 'THB', 'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX', 'USD', 'UYU', 'UZS', 'VES', 'VND', 'VUV', 'WST', 'XAF', 'XAG', 'XAU', 'XCD', 'XDR', 'XOF', 'XPD', 'XPF', 'XPT', 'YER', 'ZAR', 'ZMK ', 'ZMW'}
 
 def main(request):
     return render(request, 'ReFinance/main.html', {})
@@ -158,17 +159,29 @@ def change_account_details(request):
     if request.method == "POST":
         # Process account details form
         form = ChangeUserDetailsForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Account details successfully altered")
-            return redirect('account')
-        messages.error(request, "Unsuccessful: Invalid information")
-        for error in form.errors:
-            messages.error(request, form.errors[error])
-        return redirect('change_account_details')
+        currency_form = ChangeCurrencyForm(request.POST, instance=request.user.userProfile)
+        if not form.is_valid():
+            messages.error(request, "Unsuccessful: Invalid information")
+            for error in form.errors:
+                messages.error(request, form.errors[error])
+            return redirect('change_account_details')
+        if not currency_form.is_valid():
+            messages.error(request, "Unsuccessful: Invalid information")
+            for error in currency_form.errors:
+                messages.error(request, currency_form.errors[error])
+            return redirect('change_account_details')
+        if currency_form.cleaned_data['default_currency'].upper() not in valid_currencies:
+            messages.error(request, 'Invalid Currency')
+            return redirect('change_account_details')
+        form.save()
+        currency_form.save()
+        messages.success(request, "Account details successfully altered")
+        return redirect('account')
+        
     else:
         form = ChangeUserDetailsForm(instance=request.user)
-        return render(request, 'ReFinance/change_account_details.html', {'form':form})
+        currency_form = ChangeCurrencyForm(instance=request.user.userProfile)
+        return render(request, 'ReFinance/change_account_details.html', {'form':form, 'currency_form':currency_form})
     
 
 @login_required(login_url='/login/')

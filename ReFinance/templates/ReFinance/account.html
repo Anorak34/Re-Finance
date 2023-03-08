@@ -17,6 +17,8 @@ Account
                     <h4 class="account-card-text">Email: {{ user.email }}</h3>
                         <br>
                         <h4 class="account-card-text">Cash: {{ cash }}</h3>
+                            <br>
+                            <h4 class="account-card-text">Currency: {{ user.userProfile.default_currency|upper }}</h3>
         </div>
         <p class="account-card-icon">Re:Finance 
             <span id="staff-status">

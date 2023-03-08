@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
+from .models import *
 
 
 class NewUserForm(UserCreationForm):
@@ -79,3 +80,10 @@ class CashForm(forms.Form):
             field = self.fields.get(field_name)
             if field:
                 self.fields[field_name].label = False
+
+
+class ChangeCurrencyForm(forms.ModelForm):
+    default_currency = forms.CharField(max_length=3, help_text='Enter a valid currency code')   
+    class Meta:
+        model = Profile
+        fields = ('default_currency', )
