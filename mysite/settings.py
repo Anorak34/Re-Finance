@@ -138,6 +138,8 @@ STATIC_ROOT = BASE_DIR / 'static'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Make sure API key is set
+# Make sure API keys are set
 if not os.environ.get("API_KEY"):
     raise RuntimeError("API_KEY not set")
+if not os.environ.get("API_KEY_C"):
+    raise RuntimeError("API_KEY_C not set")

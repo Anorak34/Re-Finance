@@ -6,6 +6,9 @@ import time
 import urllib.parse
 
 
+valid_currencies = {'AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN', 'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BRL', 'BSD', 'BTC', 'BTN', 'BWP', 'BYN', 'BYR', 'BZD', 'CAD', 'CDF', 'CHF', 'CLF', 'CLP', 'CNH', 'CNY', 'COP', 'CRC', 'CUC', 'CUP', 'CVE', 'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'EEK', 'EGP', 'ERN', 'ETB', 'EUR', 'FJD', 'FKP', 'GBP', 'GEL', 'GGP', 'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HRK', 'HTG', 'HUF', 'IDR', 'ILS', 'IMP', 'INR', 'IQD', 'IRR', 'ISK', 'JEP', 'JMD', 'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW', 'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MRO', 'MRU', 'MTL', 'MUR', 'MVR', 'MWK', 'MXN', 'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK', 'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG', 'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR', 'SBD', 'SCR', 'SDG', 'SEK', 'SGD', 'SHP', 'SLL', 'SOS', 'SRD', 'SSP', 'STD', 'STN', 'SVC', 'SYP', 'SZL', 'THB', 'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX', 'USD', 'UYU', 'UZS', 'VES', 'VND', 'VUV', 'WST', 'XAF', 'XAG', 'XAU', 'XCD', 'XDR', 'XOF', 'XPD', 'XPF', 'XPT', 'YER', 'ZAR', 'ZMK ', 'ZMW'}
+
+
 # API FUNCTIONS
 
 
@@ -114,6 +117,37 @@ def usd(value):
     """Format value as USD."""
     return f"${value:,.2f}"
 
+
+def currency_converter(value, symbol):
+    if symbol.upper() == 'USD':
+        return {
+            "value":value,
+            "symbol":"usd"
+        }
+    # Contact API
+    try:
+        api_key = os.environ.get("API_KEY_C")
+        url = f"https://openexchangerates.org/api/latest.json?app_id={api_key}&symbols={urllib.parse.quote_plus(symbol.upper())}"
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.RequestException:
+        return {
+            "value":value,
+            "symbol":"usd"
+        }
+
+    # Parse response
+    try:
+        rate = response.json()
+        return {
+            "value": float(rate["rates"][symbol.upper()]) * float(value),
+            "symbol": symbol
+        }
+    except (KeyError, TypeError, ValueError):
+        return {
+            "value":value,
+            "symbol":"usd"
+        }
 
 def luhn(number):
     sum = 0

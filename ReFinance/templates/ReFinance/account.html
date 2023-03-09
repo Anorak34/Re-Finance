@@ -16,7 +16,7 @@ Account
                     <br>
                     <h4 class="account-card-text">Email: {{ user.email }}</h3>
                         <br>
-                        <h4 class="account-card-text">Cash: {{ cash }}</h3>
+                        <h4 class="account-card-text">Cash: <span class="cash" data-currency="{{ cash.symbol|upper }}">{{ cash.value }}</span></h3>
                             <br>
                             <h4 class="account-card-text">Currency: {{ user.userProfile.default_currency|upper }}</h3>
         </div>
@@ -55,4 +55,5 @@ Account
         </a>
     </div>
     <script src="\static\js\settings.js"></script>
+    <script src="\static\js\currency_format.js"></script>
     {% endblock %}

@@ -66,7 +66,7 @@ class CashForm(forms.Form):
     for i in range(2023, 2031):
         year_choices.append((i, i))
     year_choices = tuple(year_choices)
-
+    
     cash = forms.IntegerField(required=True, min_value=1, widget=forms.NumberInput(attrs={'class':'form-control', 'placeholder': '$', 'id':'cash', 'name':'cash'}))
     number = forms.CharField(required=True, max_length=19, widget=forms.TextInput(attrs={'class':'form-control','onkeypress': 'return event.charCode >= 48 && event.charCode <= 57', 'id':'number', 'name':'number', 'oninput':'handleNumber()'}))
     name = forms.CharField(required=True, widget=forms.TextInput(attrs={'class':'form-control','id':'name', 'name':'name', 'oninput':'handleName()'}))

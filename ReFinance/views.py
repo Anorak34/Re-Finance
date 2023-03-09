@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.hashers  import check_password
 from .forms import *
-from .helpers import luhn, usd
+from .helpers import luhn, usd, currency_converter
 from .models import *
 
 valid_currencies = {'AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN', 'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BRL', 'BSD', 'BTC', 'BTN', 'BWP', 'BYN', 'BYR', 'BZD', 'CAD', 'CDF', 'CHF', 'CLF', 'CLP', 'CNH', 'CNY', 'COP', 'CRC', 'CUC', 'CUP', 'CVE', 'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'EEK', 'EGP', 'ERN', 'ETB', 'EUR', 'FJD', 'FKP', 'GBP', 'GEL', 'GGP', 'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HRK', 'HTG', 'HUF', 'IDR', 'ILS', 'IMP', 'INR', 'IQD', 'IRR', 'ISK', 'JEP', 'JMD', 'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW', 'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MRO', 'MRU', 'MTL', 'MUR', 'MVR', 'MWK', 'MXN', 'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK', 'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG', 'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR', 'SBD', 'SCR', 'SDG', 'SEK', 'SGD', 'SHP', 'SLL', 'SOS', 'SRD', 'SSP', 'STD', 'STN', 'SVC', 'SYP', 'SZL', 'THB', 'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX', 'USD', 'UYU', 'UZS', 'VES', 'VND', 'VUV', 'WST', 'XAF', 'XAG', 'XAU', 'XCD', 'XDR', 'XOF', 'XPD', 'XPF', 'XPT', 'YER', 'ZAR', 'ZMK ', 'ZMW'}
@@ -97,7 +97,10 @@ def history(request):
 def account(request):
     user = request.user
     cash = user.userProfile.cash
-    cash = usd(cash)
+    currency_symbol = user.userProfile.default_currency
+    cash = currency_converter(cash, currency_symbol)
+    if cash['symbol'].upper() != currency_symbol.upper():
+        messages.error(request, "Currency conversion error, displaying cash in USD")
     return render(request, 'ReFinance/account.html', {'cash':cash})
 
 
@@ -171,13 +174,12 @@ def change_account_details(request):
                 messages.error(request, currency_form.errors[error])
             return redirect('change_account_details')
         if currency_form.cleaned_data['default_currency'].upper() not in valid_currencies:
-            messages.error(request, 'Invalid Currency')
+            messages.error(request, 'Invalid Currency Code')
             return redirect('change_account_details')
         form.save()
         currency_form.save()
         messages.success(request, "Account details successfully altered")
         return redirect('account')
-        
     else:
         form = ChangeUserDetailsForm(instance=request.user)
         currency_form = ChangeCurrencyForm(instance=request.user.userProfile)
