@@ -38,3 +38,11 @@ class Transaction(models.Model):
 
     def __str__(self):
         return self.user_id.username
+    
+    
+def set_expire():
+    return timezone.now() + timezone.timedelta(hours=24)
+
+class Currency(models.Model):
+    currencies = models.JSONField()
+    expiration_date = models.DateTimeField(default=set_expire)

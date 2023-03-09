@@ -302,6 +302,8 @@ body::-webkit-scrollbar, body::-webkit-scrollbar-track {
     margin-right: 1rem;
     text-transform: uppercase;
     transition: opacity 250ms ease;
+    text-align: left !important;
+    white-space: nowrap;
 }
 
 #text:has(.fancy:hover) .line:not(.fancy:hover) {

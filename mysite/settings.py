@@ -11,7 +11,13 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 from pathlib import Path
+import environ
 import os
+
+env = environ.Env()
+environ.Env.read_env()
+
+SECRET_KEY = env("SECRET_KEY")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +27,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8lvyv#ardebs#a=#72yejab%cbk$wx78dw047nus5(8kny*^d1'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -41,10 +46,21 @@ INSTALLED_APPS = [
     'ReFinance',
     "crispy_forms",
     "crispy_bootstrap5",
+    "django_q",
 ]
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+Q_CLUSTER = {
+    "name": "currency",
+    "workers": 1,
+    "timeout": 30,
+    "retry": 40,
+    "queue_limit": 50,
+    "orm": "default",
+    "max_attempts": 2,
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -137,9 +153,3 @@ STATIC_ROOT = BASE_DIR / 'static'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Make sure API keys are set
-if not os.environ.get("API_KEY"):
-    raise RuntimeError("API_KEY not set")
-if not os.environ.get("API_KEY_C"):
-    raise RuntimeError("API_KEY_C not set")

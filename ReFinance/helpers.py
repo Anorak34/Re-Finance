@@ -1,9 +1,14 @@
 import aiohttp
 import asyncio
+from django.utils import timezone
 import os
 import requests
 import time
 import urllib.parse
+from .models import Currency
+import environ
+env = environ.Env()
+environ.Env.read_env()
 
 
 valid_currencies = {'AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN', 'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BRL', 'BSD', 'BTC', 'BTN', 'BWP', 'BYN', 'BYR', 'BZD', 'CAD', 'CDF', 'CHF', 'CLF', 'CLP', 'CNH', 'CNY', 'COP', 'CRC', 'CUC', 'CUP', 'CVE', 'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'EEK', 'EGP', 'ERN', 'ETB', 'EUR', 'FJD', 'FKP', 'GBP', 'GEL', 'GGP', 'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HRK', 'HTG', 'HUF', 'IDR', 'ILS', 'IMP', 'INR', 'IQD', 'IRR', 'ISK', 'JEP', 'JMD', 'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW', 'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MRO', 'MRU', 'MTL', 'MUR', 'MVR', 'MWK', 'MXN', 'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK', 'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG', 'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR', 'SBD', 'SCR', 'SDG', 'SEK', 'SGD', 'SHP', 'SLL', 'SOS', 'SRD', 'SSP', 'STD', 'STN', 'SVC', 'SYP', 'SZL', 'THB', 'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX', 'USD', 'UYU', 'UZS', 'VES', 'VND', 'VUV', 'WST', 'XAF', 'XAG', 'XAU', 'XCD', 'XDR', 'XOF', 'XPD', 'XPF', 'XPT', 'YER', 'ZAR', 'ZMK ', 'ZMW'}
@@ -20,7 +25,7 @@ def lookup(symbol):
         attempts = 0
         max_attempts = 8
         while True:
-            api_key = os.environ.get("API_KEY")
+            api_key = env("API_KEY")
             url = f"https://cloud.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/quote?token={api_key}"
             response = requests.get(url)
 
@@ -75,7 +80,7 @@ async def lookup_async(symbol, session):
         attempts = 0
         max_attempts = 8
         while True:
-            api_key = os.environ.get("API_KEY")
+            api_key = env("API_KEY")
             url = f"https://cloud.iexapis.com/stable/stock/{urllib.parse.quote_plus(symbol)}/quote?token={api_key}"
 
             async with session.get(url) as response:
@@ -112,7 +117,6 @@ def multi_lookup_async(symbols):
 
 # MISC FUNCTIONS
 
-
 def usd(value):
     """Format value as USD."""
     return f"${value:,.2f}"
@@ -124,30 +128,40 @@ def currency_converter(value, symbol):
             "value":value,
             "symbol":"usd"
         }
-    # Contact API
-    try:
-        api_key = os.environ.get("API_KEY_C")
-        url = f"https://openexchangerates.org/api/latest.json?app_id={api_key}&symbols={urllib.parse.quote_plus(symbol.upper())}"
-        response = requests.get(url)
-        response.raise_for_status()
-    except requests.RequestException:
-        return {
-            "value":value,
-            "symbol":"usd"
-        }
+    
+    currencyObj = Currency.objects.filter(expiration_date__gte = timezone.now()).order_by('id').latest('id') 
+    rate = currencyObj.currencies['rates'][symbol.upper()]
 
-    # Parse response
-    try:
-        rate = response.json()
+    if rate:
         return {
-            "value": float(rate["rates"][symbol.upper()]) * float(value),
+            "value": float(rate) * float(value),
             "symbol": symbol
         }
-    except (KeyError, TypeError, ValueError):
-        return {
-            "value":value,
-            "symbol":"usd"
-        }
+    else:
+        # Contact API
+        try:
+            api_key = env("API_KEY_C")
+            url = f"https://openexchangerates.org/api/latest.json?app_id={api_key}&symbols={urllib.parse.quote_plus(symbol.upper())}"
+            response = requests.get(url)
+            response.raise_for_status()
+        except requests.RequestException:
+            return {
+                "value":value,
+                "symbol":"usd"
+            }
+
+        # Parse response
+        try:
+            rate = response.json()
+            return {
+                "value": float(rate["rates"][symbol.upper()]) * float(value),
+                "symbol": symbol
+            }
+        except (KeyError, TypeError, ValueError):
+            return {
+                "value":value,
+                "symbol":"usd"
+            }
 
 def luhn(number):
     sum = 0
