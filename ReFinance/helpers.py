@@ -130,7 +130,10 @@ def currency_converter(value, symbol):
         }
     
     currencyObj = Currency.objects.filter(expiration_date__gte = timezone.now()).order_by('id').latest('id') 
-    rate = currencyObj.currencies['rates'][symbol.upper()]
+    try:
+        rate = currencyObj.currencies['rates'][symbol.upper()]
+    except:
+        rate = None
 
     if rate:
         return {
@@ -162,6 +165,32 @@ def currency_converter(value, symbol):
                 "value":value,
                 "symbol":"usd"
             }
+
+
+def currency_converter_mult(value, symbol, currencyObj):
+    if symbol.upper() == 'USD':
+        return {
+            "value":value,
+            "symbol":"usd"
+        }
+    
+    try:
+        rate = currencyObj.currencies['rates'][symbol.upper()]
+    except:
+        rate = None
+
+    if rate:
+        return {
+            "value": float(rate) * float(value),
+            "symbol": symbol
+        }
+    else:
+        return {
+            "value":value,
+            "symbol":"usd"
+        }
+        
+
 
 def luhn(number):
     sum = 0

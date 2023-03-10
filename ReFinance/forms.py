@@ -87,3 +87,27 @@ class ChangeCurrencyForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = ('default_currency', )
+
+
+class BuyForm(forms.Form):
+    symbol = forms.CharField(required=True, max_length=5, label="Symbol")
+    shares = forms.IntegerField(required=True, min_value=1, label="Shares")
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in self.fields:
+            field = self.fields.get(field_name)
+            if field:
+                self.fields[field_name].widget.attrs.update({"placeholder": field.label})
+                self.fields[field_name].label = False
+
+
+class SellForm(forms.Form):
+    symbol = forms.ChoiceField(required=True, label="Symbol")
+    shares = forms.IntegerField(required=True, min_value=1, label="Shares")
+    
+    def __init__(self, choices_, *args, **kwargs):
+        super(SellForm, self).__init__(*args, **kwargs)
+        self.fields['symbol'].choices = choices_
+        self.fields['shares'].widget.attrs.update({"placeholder": 'Shares'})
+        self.fields['shares'].label = False

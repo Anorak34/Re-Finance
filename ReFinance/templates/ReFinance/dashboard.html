@@ -6,7 +6,7 @@
 
 {% block main %}
 <div class="container">
-    <table class="table table-striped">
+    <table class="table table-striped table-hover table-dark">
         <thead>
             <tr>
                 <th class="text-start">Symbol</th>
@@ -18,27 +18,26 @@
         </thead>
         <tbody>
             {% for entry in stocks %}
-                {% if entry['shares'] > 0 %}
                     <tr>
-                        <td class="text-start">{{ entry['symbol'] }}</td>
-                        <td class="text-start">{{ entry['name'] }}</td>
-                        <td class="text-end">{{ entry['shares'] }}</td>
-                        <td class="text-end">{{ entry['price'] }}</td>
-                        <td class="text-end">{{ entry['total'] }}</td>
+                        <td class="text-start">{{ entry.symbol }}</td>
+                        <td class="text-start">{{ entry.name }}</td>
+                        <td class="text-end">{{ entry.shares }}</td>
+                        <td class="text-end"><span class="cash" data-currency="{{ entry.price.symbol|upper }}">{{ entry.price.value }}</span></td>
+                        <td class="text-end"><span class="cash" data-currency="{{ entry.total.symbol|upper }}">{{ entry.total.value }}</span></td>
                     </tr>
-                {% endif %}
             {% endfor %}
         </tbody>
         <tfoot>
             <tr>
-                <td class="border-0 fw-bold text-end" colspan="4">Cash</td>
-                <td class="border-0 text-end">{{ cash }}</td>
+                <td class="border-0 fw-bold text-end" colspan="4">CASH</td>
+                <td class="border-0 text-end"><span class="cash" data-currency="{{ cash.symbol|upper }}">{{ cash.value }}</span></td>
             </tr>
             <tr>
                 <td class="border-0 fw-bold text-end" colspan="4">TOTAL</td>
-                <td class="border-0 w-bold text-end">{{ total }}</td>
+                <td class="border-0 w-bold text-end"><span class="cash" data-currency="{{ total.symbol|upper }}">{{ total.value }}</span></td>
             </tr>
         </tfoot>
     </table>
 </div>
+<script src="\static\js\currency_format.js"></script>
 {% endblock %}

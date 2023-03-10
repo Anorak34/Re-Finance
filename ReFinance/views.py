@@ -4,14 +4,45 @@ from django.contrib.auth import login, authenticate, logout, update_session_auth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.hashers  import check_password
+from django.db.models import Sum
 from .forms import *
-from .helpers import luhn, usd, currency_converter, lookup
+from .helpers import luhn, usd, currency_converter, lookup, currency_converter_mult
 from .models import *
 
 valid_currencies = {'AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN', 'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BRL', 'BSD', 'BTC', 'BTN', 'BWP', 'BYN', 'BYR', 'BZD', 'CAD', 'CDF', 'CHF', 'CLF', 'CLP', 'CNH', 'CNY', 'COP', 'CRC', 'CUC', 'CUP', 'CVE', 'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'EEK', 'EGP', 'ERN', 'ETB', 'EUR', 'FJD', 'FKP', 'GBP', 'GEL', 'GGP', 'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HRK', 'HTG', 'HUF', 'IDR', 'ILS', 'IMP', 'INR', 'IQD', 'IRR', 'ISK', 'JEP', 'JMD', 'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW', 'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MRO', 'MRU', 'MTL', 'MUR', 'MVR', 'MWK', 'MXN', 'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK', 'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG', 'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR', 'SBD', 'SCR', 'SDG', 'SEK', 'SGD', 'SHP', 'SLL', 'SOS', 'SRD', 'SSP', 'STD', 'STN', 'SVC', 'SYP', 'SZL', 'THB', 'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX', 'USD', 'UYU', 'UZS', 'VES', 'VND', 'VUV', 'WST', 'XAF', 'XAG', 'XAU', 'XCD', 'XDR', 'XOF', 'XPD', 'XPF', 'XPT', 'YER', 'ZAR', 'ZMK ', 'ZMW'}
 
 def main(request):
-    return render(request, 'ReFinance/main.html', {})
+
+    # Get user data and currency rates
+    Ustocks = []
+    user = request.user
+    Ustocks_temp = Transaction.objects.filter(user_id = user).values('symbol').annotate(shares=(Sum('shares')))
+    for stock in Ustocks_temp:
+        if stock['shares'] != 0:
+            Ustocks.append(stock)
+    cash = user.userProfile.cash
+    currency_symbol = user.userProfile.default_currency
+    currencyObj = Currency.objects.filter(expiration_date__gte = timezone.now()).order_by('id').latest('id')
+
+    stocks = []
+    stocks_value = 0
+    # Lookup all users stocks and add to list
+    for stock in Ustocks:
+        stocks.append(lookup(stock['symbol']))
+    # Add users stock number to the list of stock data, compute total value of each stock and all stocks, convert to usd
+    for stock, Ustock in zip(stocks, Ustocks):
+        stock['shares'] = Ustock['shares']
+        stock['total'] = (stock['price'] * stock['shares'])
+        stocks_value += stock['total']
+        stock['price'] = currency_converter_mult(stock['price'], currency_symbol, currencyObj)
+        stock['total'] = currency_converter_mult(stock['total'], currency_symbol, currencyObj)
+
+    total = cash + stocks_value
+    total = currency_converter_mult(total, currency_symbol, currencyObj)
+    cash = currency_converter_mult(cash, currency_symbol, currencyObj)
+
+    return render(request, 'ReFinance/dashboard.html', {'stocks':stocks, 'total':total, 'cash':cash})
+    #return render(request, 'ReFinance/main.html', {})
 
 
 def register(request):
@@ -86,24 +117,98 @@ def quote(request):
 @login_required(login_url='/login/')
 def buy(request):
     if request.method == "POST":
-        messages.success(request, "x shares of x bought at $x")
+        # Process Buy form
+        form = BuyForm(request.POST)
+        if not form.is_valid():
+            messages.error(request, "Unsuccessful Purchase: Invalid information")
+            for error in form.errors:
+                messages.error(request, form.errors[error])
+            return redirect('buy')
+        symbol = form.cleaned_data['symbol'].upper()
+        shares = form.cleaned_data['shares']
+        quote = lookup(symbol)
+        if not quote:
+            messages.error(request, "Unsuccessful Purchase: Invalid Symbol")
+            return redirect('buy')
+        
+        # Get User data
+        user = request.user
+        cash = user.userProfile.cash
+
+        # Process transaction
+        share_price = quote["price"]
+        price = share_price * shares
+        if price <= cash:
+            Profile.addCash(user, (-price))
+            Transaction.objects.create(user_id = user, symbol = symbol, shares = shares, type = 'BUY', price = share_price)
+        else:
+            messages.error(request, "Unsuccessful Purchase: Insufficient funds")
+            return redirect('buy')
+        
+        messages.success(request, f"{shares} shares of {symbol} bought at {usd(share_price)}")
         return redirect('main')
     else:
-        return render(request, 'ReFinance/buy.html', {})
+        form = BuyForm()
+        return render(request, 'ReFinance/buy.html', {'form':form})
 
 
 @login_required(login_url='/login/')
 def sell(request):
+    # Get user transactions and generate sell options
+    choices = []
+    user = request.user
+    stocks = Transaction.objects.filter(user_id = user).values('symbol').annotate(total=(Sum('shares')))
+    for stock in stocks:
+        if stock['total'] != 0:
+            choices.append((stock['symbol'], stock['symbol']))
+    choices = tuple(choices)
+
     if request.method == "POST":
-        messages.success(request, "x shares of x sold at $x")
-        return redirect('main')
+        # Process Sell form
+        form = SellForm(choices, request.POST)
+        if not form.is_valid():
+            messages.error(request, "Unsuccessful Sale: Invalid information")
+            for error in form.errors:
+                messages.error(request, form.errors[error])
+            return redirect('sell')
+        symbol = form.cleaned_data['symbol'].upper()
+        shares = form.cleaned_data['shares']
+        quote = lookup(symbol)
+        if not quote:
+            messages.error(request, "Unsuccessful Sale: Invalid Symbol")
+            return redirect('sell')
+        
+        # Get User data
+        current_shares = Transaction.objects.filter(user_id = user, symbol = symbol).aggregate(TOTAL = Sum('shares'))['TOTAL']
+
+        # Process transaction
+        share_price = quote["price"]
+        value = share_price * shares
+        if shares > current_shares:
+            messages.error(request, "Unsuccessful Sale: You do not own enough shares")
+            return redirect('sell')
+        else:
+            Profile.addCash(user, value)
+            Transaction.objects.create(user_id = user, symbol = symbol, shares = -shares, type = 'SELL', price = share_price)
+        
+            messages.success(request, f"{shares} shares of {symbol} sold at {usd(share_price)}")
+            return redirect('main')
     else:
-        return render(request, 'ReFinance/sell.html', {})
+        form = SellForm(choices)
+        return render(request, 'ReFinance/sell.html', {'form':form})
     
 
 @login_required(login_url='/login/')
 def history(request):
-    return render(request, 'ReFinance/history.html', {})
+    user = request.user
+    transactions = Transaction.objects.filter(user_id = user).values('symbol', 'shares', 'type', 'price', 'transacted')
+    currencyObj = Currency.objects.filter(expiration_date__gte = timezone.now()).order_by('id').latest('id')
+    currency_symbol = user.userProfile.default_currency
+    for transaction in transactions:
+        transaction['price'] = currency_converter_mult(transaction['price'], currency_symbol, currencyObj)
+    if transactions[0]['price']['symbol'].upper() != currency_symbol.upper():
+        messages.error(request, "Currency conversion error, displaying cash in USD")
+    return render(request, 'ReFinance/history.html', {'transactions':transactions})
 
 
 @login_required(login_url='/login/')

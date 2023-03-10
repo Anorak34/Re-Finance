@@ -6,7 +6,7 @@
 
 {% block main %}
 <div class="container">
-    <table class="table table-hover">
+    <table class="table table-hover table-dark">
         <thead>
             <tr>
                 <th class="text-start">Symbol</th>
@@ -19,14 +19,15 @@
         <tbody>
             {% for entry in transactions %}
                 <tr>
-                    <td class="text-start">{{ entry['symbol'] }}</td>
-                    <td class="text-start">{{ entry['type'] }}</td>
-                    <td class="text-end">{{ entry['shares'] }}</td>
-                    <td class="text-end">{{ entry['price'] }}</td>
-                    <td class="text-end">{{ entry['transacted'] }}</td>
+                    <td class="text-start">{{ entry.symbol }}</td>
+                    <td class="text-start">{{ entry.type }}</td>
+                    <td class="text-end">{{ entry.shares }}</td>
+                    <td class="text-end"><span class="cash" data-currency="{{ entry.price.symbol|upper }}">{{ entry.price.value }}</span></td>
+                    <td class="text-end">{{ entry.transacted }}</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+<script src="\static\js\currency_format.js"></script>
 {% endblock %}
