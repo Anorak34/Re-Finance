@@ -6,43 +6,48 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.hashers  import check_password
 from django.db.models import Sum
 from .forms import *
-from .helpers import luhn, usd, currency_converter, lookup, currency_converter_mult
+from .helpers import luhn, usd, currency_converter, lookup, currency_converter_mult, multi_lookup_async
 from .models import *
 
 valid_currencies = {'AED', 'AFN', 'ALL', 'AMD', 'ANG', 'AOA', 'ARS', 'AUD', 'AWG', 'AZN', 'BAM', 'BBD', 'BDT', 'BGN', 'BHD', 'BIF', 'BMD', 'BND', 'BOB', 'BRL', 'BSD', 'BTC', 'BTN', 'BWP', 'BYN', 'BYR', 'BZD', 'CAD', 'CDF', 'CHF', 'CLF', 'CLP', 'CNH', 'CNY', 'COP', 'CRC', 'CUC', 'CUP', 'CVE', 'CZK', 'DJF', 'DKK', 'DOP', 'DZD', 'EEK', 'EGP', 'ERN', 'ETB', 'EUR', 'FJD', 'FKP', 'GBP', 'GEL', 'GGP', 'GHS', 'GIP', 'GMD', 'GNF', 'GTQ', 'GYD', 'HKD', 'HNL', 'HRK', 'HTG', 'HUF', 'IDR', 'ILS', 'IMP', 'INR', 'IQD', 'IRR', 'ISK', 'JEP', 'JMD', 'JOD', 'JPY', 'KES', 'KGS', 'KHR', 'KMF', 'KPW', 'KRW', 'KWD', 'KYD', 'KZT', 'LAK', 'LBP', 'LKR', 'LRD', 'LSL', 'LYD', 'MAD', 'MDL', 'MGA', 'MKD', 'MMK', 'MNT', 'MOP', 'MRO', 'MRU', 'MTL', 'MUR', 'MVR', 'MWK', 'MXN', 'MYR', 'MZN', 'NAD', 'NGN', 'NIO', 'NOK', 'NPR', 'NZD', 'OMR', 'PAB', 'PEN', 'PGK', 'PHP', 'PKR', 'PLN', 'PYG', 'QAR', 'RON', 'RSD', 'RUB', 'RWF', 'SAR', 'SBD', 'SCR', 'SDG', 'SEK', 'SGD', 'SHP', 'SLL', 'SOS', 'SRD', 'SSP', 'STD', 'STN', 'SVC', 'SYP', 'SZL', 'THB', 'TJS', 'TMT', 'TND', 'TOP', 'TRY', 'TTD', 'TWD', 'TZS', 'UAH', 'UGX', 'USD', 'UYU', 'UZS', 'VES', 'VND', 'VUV', 'WST', 'XAF', 'XAG', 'XAU', 'XCD', 'XDR', 'XOF', 'XPD', 'XPF', 'XPT', 'YER', 'ZAR', 'ZMK ', 'ZMW'}
 
 def main(request):
+    if request.user.is_authenticated:   
+        # Get user data and currency rates
+        Ustocks = []
+        user = request.user
+        Ustocks_temp = Transaction.objects.filter(user_id = user).values('symbol').annotate(shares=(Sum('shares')))
+        for stock in Ustocks_temp:
+            if stock['shares'] != 0:
+                Ustocks.append(stock)
+        cash = user.userProfile.cash
+        currency_symbol = user.userProfile.default_currency
+        try:
+            currencyObj = Currency.objects.filter(expiration_date__gte = timezone.now()).order_by('id').latest('id')
+        except:
+            currencyObj = None
 
-    # Get user data and currency rates
-    Ustocks = []
-    user = request.user
-    Ustocks_temp = Transaction.objects.filter(user_id = user).values('symbol').annotate(shares=(Sum('shares')))
-    for stock in Ustocks_temp:
-        if stock['shares'] != 0:
-            Ustocks.append(stock)
-    cash = user.userProfile.cash
-    currency_symbol = user.userProfile.default_currency
-    currencyObj = Currency.objects.filter(expiration_date__gte = timezone.now()).order_by('id').latest('id')
+        stocks = []
+        stocks_value = 0
+        # Lookup all users stocks and add to list
+        for stock in Ustocks:
+            stocks.append(stock['symbol'])
+        stocks = multi_lookup_async(stocks)
+        # Add users stock number to the list of stock data, compute total value of each stock and all stocks, convert to user currency
+        for stock, Ustock in zip(stocks, Ustocks):
+            stock['shares'] = Ustock['shares']
+            stock['total'] = (stock['price'] * stock['shares'])
+            stocks_value += stock['total']
+            stock['price'] = currency_converter_mult(stock['price'], currency_symbol, currencyObj)
+            stock['total'] = currency_converter_mult(stock['total'], currency_symbol, currencyObj)
 
-    stocks = []
-    stocks_value = 0
-    # Lookup all users stocks and add to list
-    for stock in Ustocks:
-        stocks.append(lookup(stock['symbol']))
-    # Add users stock number to the list of stock data, compute total value of each stock and all stocks, convert to usd
-    for stock, Ustock in zip(stocks, Ustocks):
-        stock['shares'] = Ustock['shares']
-        stock['total'] = (stock['price'] * stock['shares'])
-        stocks_value += stock['total']
-        stock['price'] = currency_converter_mult(stock['price'], currency_symbol, currencyObj)
-        stock['total'] = currency_converter_mult(stock['total'], currency_symbol, currencyObj)
+        total = cash + stocks_value
+        total = currency_converter_mult(total, currency_symbol, currencyObj)
+        cash = currency_converter_mult(cash, currency_symbol, currencyObj)
 
-    total = cash + stocks_value
-    total = currency_converter_mult(total, currency_symbol, currencyObj)
-    cash = currency_converter_mult(cash, currency_symbol, currencyObj)
-
-    return render(request, 'ReFinance/dashboard.html', {'stocks':stocks, 'total':total, 'cash':cash})
-    #return render(request, 'ReFinance/main.html', {})
+        return render(request, 'ReFinance/dashboard.html', {'stocks':stocks, 'total':total, 'cash':cash})
+    else:
+        return render(request, 'ReFinance/main.html', {})
 
 
 def register(request):
