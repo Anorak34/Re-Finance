@@ -55,11 +55,6 @@ def lookup(symbol):
         return None
 
 
-def convert_currency(value, target_currency):
-    # TODO
-    return None
-
-
 # ASYNC FUNCTIONS
 
 

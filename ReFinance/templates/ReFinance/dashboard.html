@@ -1,7 +1,7 @@
 {% extends 'ReFinance/layout.html' %}
 
 {% block title %}
-    Portfolio
+Portfolio
 {% endblock %}
 
 {% block main %}
@@ -14,17 +14,31 @@
                 <th class="text-end">Shares</th>
                 <th class="text-end">Price</th>
                 <th class="text-end">TOTAL</th>
+                <th>Buy/Sell</th>
             </tr>
         </thead>
         <tbody>
             {% for entry in stocks %}
-                    <tr>
-                        <td class="text-start">{{ entry.symbol }}</td>
-                        <td class="text-start">{{ entry.name }}</td>
-                        <td class="text-end">{{ entry.shares }}</td>
-                        <td class="text-end"><span class="cash" data-currency="{{ entry.price.symbol|upper }}">{{ entry.price.value }}</span></td>
-                        <td class="text-end"><span class="cash" data-currency="{{ entry.total.symbol|upper }}">{{ entry.total.value }}</span></td>
-                    </tr>
+            <tr>
+                <td class="text-start">{{ entry.symbol }}</td>
+                <td class="text-start">{{ entry.name }}</td>
+                <td class="text-end">{{ entry.shares }}</td>
+                <td class="text-end"><span class="cash" data-currency="{{ entry.price.symbol|upper }}">{{ entry.price.value }}</span></td>
+                <td class="text-end"><span class="cash" data-currency="{{ entry.total.symbol|upper }}">{{ entry.total.value }}</span></td>
+                <td style="width:240px;">
+                    <div>
+                        <form id="{{forloop.counter}}" action="" method="post">{% csrf_token %}
+                            <div class="main-form mx-auto">
+                                <input type="hidden" name="symbol" value="{{ entry.symbol }}" id="id_symbol">
+                                <input type="number" name="shares" min="1" placeholder="Shares" class="numberinput form-control" required id="id_shares" style="width:100px;">
+                                <input type="hidden" name="page" value="main" id="id_page">
+                                <button class="btn btn-outline-light mx-1" onclick="buy({{forloop.counter}})" type="submit">Buy</button>
+                                <button class="btn btn-outline-light" onclick="sell({{forloop.counter}})" type="submit">Sell</button>
+                            </div>
+                        </form>
+                    </div>
+                </td>
+            </tr>
             {% endfor %}
         </tbody>
         <tfoot>
@@ -40,4 +54,5 @@
     </table>
 </div>
 <script src="\static\js\currency_format.js"></script>
+<script src="\static\js\submit.js"></script>
 {% endblock %}

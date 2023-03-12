@@ -124,17 +124,20 @@ def buy(request):
     if request.method == "POST":
         # Process Buy form
         form = BuyForm(request.POST)
+        page = form['page'].value()
+        if page != 'buy' and page != 'main':
+            page = 'buy'
         if not form.is_valid():
             messages.error(request, "Unsuccessful Purchase: Invalid information")
             for error in form.errors:
                 messages.error(request, form.errors[error])
-            return redirect('buy')
+            return redirect(page)
         symbol = form.cleaned_data['symbol'].upper()
         shares = form.cleaned_data['shares']
         quote = lookup(symbol)
         if not quote:
             messages.error(request, "Unsuccessful Purchase: Invalid Symbol")
-            return redirect('buy')
+            return redirect(page)
         
         # Get User data
         user = request.user
@@ -148,12 +151,12 @@ def buy(request):
             Transaction.objects.create(user_id = user, symbol = symbol, shares = shares, type = 'BUY', price = share_price)
         else:
             messages.error(request, "Unsuccessful Purchase: Insufficient funds")
-            return redirect('buy')
+            return redirect(page)
         
         messages.success(request, f"{shares} shares of {symbol} bought at {usd(share_price)}")
         return redirect('main')
     else:
-        form = BuyForm()
+        form = BuyForm(initial={'page': 'buy'})
         return render(request, 'ReFinance/buy.html', {'form':form})
 
 
@@ -171,17 +174,20 @@ def sell(request):
     if request.method == "POST":
         # Process Sell form
         form = SellForm(choices, request.POST)
+        page = form['page'].value()
+        if page != 'sell' and page != 'main':
+            page = 'sell'
         if not form.is_valid():
             messages.error(request, "Unsuccessful Sale: Invalid information")
             for error in form.errors:
                 messages.error(request, form.errors[error])
-            return redirect('sell')
+            return redirect(page)
         symbol = form.cleaned_data['symbol'].upper()
         shares = form.cleaned_data['shares']
         quote = lookup(symbol)
         if not quote:
             messages.error(request, "Unsuccessful Sale: Invalid Symbol")
-            return redirect('sell')
+            return redirect(page)
         
         # Get User data
         current_shares = Transaction.objects.filter(user_id = user, symbol = symbol).aggregate(TOTAL = Sum('shares'))['TOTAL']
@@ -191,7 +197,7 @@ def sell(request):
         value = share_price * shares
         if shares > current_shares:
             messages.error(request, "Unsuccessful Sale: You do not own enough shares")
-            return redirect('sell')
+            return redirect(page)
         else:
             Profile.addCash(user, value)
             Transaction.objects.create(user_id = user, symbol = symbol, shares = -shares, type = 'SELL', price = share_price)
@@ -199,14 +205,15 @@ def sell(request):
             messages.success(request, f"{shares} shares of {symbol} sold at {usd(share_price)}")
             return redirect('main')
     else:
-        form = SellForm(choices)
+        form = SellForm(choices, initial={'page': 'sell'})
         return render(request, 'ReFinance/sell.html', {'form':form})
     
 
 @login_required(login_url='/login/')
 def history(request):
+    # Get users transactions and covert the currency
     user = request.user
-    transactions = Transaction.objects.filter(user_id = user).values('symbol', 'shares', 'type', 'price', 'transacted')
+    transactions = Transaction.objects.filter(user_id = user).values('symbol', 'shares', 'type', 'price', 'transacted').order_by('-transacted')
     currencyObj = Currency.objects.filter(expiration_date__gte = timezone.now()).order_by('id').latest('id')
     currency_symbol = user.userProfile.default_currency
     for transaction in transactions:
@@ -218,6 +225,7 @@ def history(request):
 
 @login_required(login_url='/login/')
 def account(request):
+    # Get and convert user balence
     user = request.user
     cash = user.userProfile.cash
     currency_symbol = user.userProfile.default_currency
@@ -328,8 +336,13 @@ def delete_account(request):
     else:
         form = DeleteAccountForm()
         return render(request, 'ReFinance/delete_account.html', {'form':form})
-    
 
-def test(request):
-    form = CashForm()
-    return render(request, 'ReFinance/test.html', {'form':form})
+
+def view_404(request, exception=None):
+    messages.error(request, "ERROR: 404 Not found")
+    return redirect('main')
+
+
+def view_500(request, exception=None):
+    messages.error(request, "ERROR: 500 Server issue")
+    return redirect('main')

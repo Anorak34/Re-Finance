@@ -54,6 +54,11 @@ h1 {
     text-align: left !important;
 }
 
+.main-form {
+    width:fit-content;
+    display:flex;
+}
+
 /* LINK CSS */
 
 .main-links {

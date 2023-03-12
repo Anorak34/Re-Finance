@@ -92,7 +92,7 @@ class ChangeCurrencyForm(forms.ModelForm):
 class BuyForm(forms.Form):
     symbol = forms.CharField(required=True, max_length=5, label="Symbol")
     shares = forms.IntegerField(required=True, min_value=1, label="Shares")
-    
+    page = forms.CharField(widget=forms.HiddenInput())
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name in self.fields:
@@ -105,7 +105,7 @@ class BuyForm(forms.Form):
 class SellForm(forms.Form):
     symbol = forms.ChoiceField(required=True, label="Symbol")
     shares = forms.IntegerField(required=True, min_value=1, label="Shares")
-    
+    page = forms.CharField(widget=forms.HiddenInput())
     def __init__(self, choices_, *args, **kwargs):
         super(SellForm, self).__init__(*args, **kwargs)
         self.fields['symbol'].choices = choices_

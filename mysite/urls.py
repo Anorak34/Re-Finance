@@ -20,3 +20,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('ReFinance.urls')),
 ]
+
+handler404 = 'ReFinance.views.view_404'
+handler500 = 'ReFinance.views.view_500'
