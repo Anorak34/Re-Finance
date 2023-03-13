@@ -218,8 +218,9 @@ def history(request):
     currency_symbol = user.userProfile.default_currency
     for transaction in transactions:
         transaction['price'] = currency_converter_mult(transaction['price'], currency_symbol, currencyObj)
-    if transactions[0]['price']['symbol'].upper() != currency_symbol.upper():
-        messages.error(request, "Currency conversion error, displaying cash in USD")
+    if transactions:
+        if transactions[0]['price']['symbol'].upper() != currency_symbol.upper():
+            messages.error(request, "Currency conversion error, displaying cash in USD")
     return render(request, 'ReFinance/history.html', {'transactions':transactions})
 
 

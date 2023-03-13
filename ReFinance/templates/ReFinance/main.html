@@ -1,4 +1,5 @@
 {% extends 'ReFinance/layout.html' %}
+{% load socialaccount %}
 
 {% block title %}
 Main
@@ -29,6 +30,8 @@ Main
         a simulated stock portfolio app.
         <br><br>
         <span class="main-links"><a href="/login">Login</a> - <a href="/register">Register</a></span>
+        <br>
+        <span class="mx-auto"><a class="gh-btn" href="{% provider_login_url 'github' %}">{% include './icons/github.svg' %} Sign In with GitHub</a></span>
     </h1>
 </div>
 <script src="\static\js\stars.js"></script>

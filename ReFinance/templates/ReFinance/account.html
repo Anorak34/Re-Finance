@@ -23,7 +23,10 @@ Account
         <p class="account-card-icon">Re:Finance 
             <span id="staff-status">
                 {% if user.is_staff %}
-                - STAFF
+                - 
+                <a class="staff-link" href="/admin/">
+                STAFF
+                </a>
                 {% endif %}
             </span>
         </p>

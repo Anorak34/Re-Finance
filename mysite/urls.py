@@ -19,6 +19,7 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('ReFinance.urls')),
+    path('accounts/', include('allauth.urls')),
 ]
 
 handler404 = 'ReFinance.views.view_404'
