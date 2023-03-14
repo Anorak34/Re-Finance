@@ -5,30 +5,21 @@ from .serializers import *
 from ReFinance.models import Transaction, Profile
 from django.contrib.auth.models import User
 
-class TransactionViewSet(viewsets.ModelViewSet):
+
+class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     queryset = Transaction.objects.all().order_by('transacted')
+    serializer_class = TransactionSerializer
 
-    def get_serializer_class(self):
-        if self.request.user.is_staff:
-            return AdminTransactionSerializer
-        return TransactionSerializer
-
-
-class ProfileViewSet(viewsets.ModelViewSet):
+class ProfileViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     queryset = Profile.objects.all().order_by('user')
+    serializer_class = ProfileSerializer
 
-    def get_serializer_class(self):
-        if self.request.user.is_staff:
-            return AdminProfileSerializer
-        return ProfileSerializer
-    
-
-class UserViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAdminUser]
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [permissions.IsAuthenticated]
 
     queryset = User.objects.all().order_by('id')
     serializer_class = UserSerializer

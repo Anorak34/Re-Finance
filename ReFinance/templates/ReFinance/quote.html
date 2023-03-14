@@ -7,7 +7,7 @@ Quote
 {% block main %}
     <form action="{% url 'quote' %}" method="post">{% csrf_token %}
         <div class="mb-3">
-            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id="symbol" name="symbol" placeholder="Symbol" type="text" maxlength="5">
+            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" id="symbol" name="symbol" placeholder="Symbol" type="text" maxlength="5" required>
         </div>
         <button class="btn btn-outline-light" type="submit">Quote</button>
     </form>
